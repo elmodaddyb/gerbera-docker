@@ -91,4 +91,4 @@ RUN chown gerbera:gerbera -Rv /home/gerbera
 USER gerbera
 
 ENTRYPOINT ["/usr/local/bin/gerbera"]
-EXPOSE 49152
+EXPOSE 49152/tcp 1900/udp
