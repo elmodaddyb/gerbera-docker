@@ -1,0 +1,94 @@
+# Dockerfile for Gerbera Fedora Development
+# Created by: Eamonn Buss
+# Created on: 09/21/2017
+
+##--------------------------------------
+## Start with Fedora image as the base
+##--------------------------------------
+FROM fedora:latest
+
+##--------------------------------------
+## Maintainer - Eamonn Buss
+##--------------------------------------
+MAINTAINER Eamonn Buss <eamonn@srcdevbin.com>
+
+##--------------------------------------
+## Install Gerbera Build Prerequisites
+##--------------------------------------
+
+RUN dnf groupinstall -y "Development Tools"
+
+RUN dnf install -y https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+
+RUN dnf install -y wget \
+autoconf \
+automake \
+curl-devel \
+libtool \
+taglib \
+taglib-devel \
+cmake \
+expat \
+expat-devel \
+ffmpeg \
+ffmpeg-devel \
+ffmpegthumbnailer \
+ffmpegthumbnailer-devel \
+file-devel \
+gcc-c++ \
+libexif \
+libexif-devel \
+libuuid \
+libuuid-devel \
+sqlite \
+sqlite-devel \
+sudo \
+xz \
+zlib \
+zlib-devel
+
+ENV SHELL /bin/bash
+
+##--------------------------------------
+## Clone Gerbera GIT Repository
+##--------------------------------------
+RUN mkdir /gerbera
+WORKDIR /gerbera
+RUN git clone https://github.com/elmodaddyb/gerbera.git
+
+RUN mkdir build
+WORKDIR /gerbera/build
+
+##--------------------------------------
+## Install libupnp library
+##--------------------------------------
+RUN sh ../gerbera/scripts/install-pupnp18.sh
+
+##--------------------------------------
+## Install Duktape and make library available
+##--------------------------------------
+RUN sh ../gerbera/scripts/install-duktape.sh
+RUN echo /usr/local/lib > /etc/ld.so.conf.d/gerbera-x86_64.conf
+RUN ldconfig
+
+##--------------------------------------
+## Build & Install Gerbera
+##--------------------------------------
+RUN cmake ../gerbera -DWITH_MAGIC=1 -DWITH_MYSQL=0 -DWITH_CURL=1 -DWITH_JS=1 -DWITH_TAGLIB=1 -DWITH_AVCODEC=1 -DWITH_EXIF=1 -DWITH_LASTFM=0
+RUN make
+RUN make install
+
+##--------------------------------------
+## Setup the Gerbera user
+##--------------------------------------
+RUN useradd --system gerbera
+RUN mkdir /home/gerbera
+RUN mkdir /home/gerbera/.config
+
+RUN chown gerbera:gerbera -Rv /usr/local/share/gerbera
+RUN chown gerbera:gerbera -Rv /home/gerbera
+USER gerbera
+
+ENTRYPOINT ["/usr/local/bin/gerbera"]
+EXPOSE 49152
