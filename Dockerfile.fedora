@@ -34,7 +34,9 @@ expat-devel \
 ffmpeg \
 ffmpeg-devel \
 ffmpegthumbnailer \
-ffmpegthumbnailer-devel \
+ffmpegthumbnailer-devel
+
+RUN dnf install -y \
 file-devel \
 gcc-c++ \
 libexif \
