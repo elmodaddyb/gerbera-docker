@@ -21,4 +21,4 @@ docker run --net=host \
   -v /movies-host:/movies-container:Z \
   elmodaddyb/gerbera-ubuntu
 ```
-> Be Careful, the `:Z` option gives the container full writes to relabel/change filesystem on the host.
+> Be Careful, the `:Z` option gives the container full privileges to relabel/change filesystem on the host.
