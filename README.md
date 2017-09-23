@@ -3,22 +3,22 @@ Dockerfiles to support Gerbera Media Server
 
 ### Build the Docker
 
-```
-$ docker build -t elmodaddyb/gerbera-fedora -f Dockerfile.fedora .
-```
+> Instructions are similar for each distribution.
 
+```
+$ docker build -t elmodaddyb/gerbera-ubuntu -f Dockerfile.ubuntu .
+```
 ### Run the Docker
 
-Let's assume we want to run the docker container on the localhost's port=8888
-
 ```
-docker run -p 8888:49152 -p1900:1900/udp elmodaddyb/gerbera-fedora
+docker run --net=host elmodaddyb/gerbera-ubuntu
 ```
 
 ### Bind a host volume
 
 ```
 docker run --net=host \
-  --mount type=bind,source=/Users/eamonn/Movies,target=/mediatomb \
-  elmodaddyb/gerbera-fedora
+  -v /movies-host:/movies-container:Z \
+  elmodaddyb/gerbera-ubuntu
 ```
+> Be Careful, the `:Z` option gives the container full writes to relabel/change filesystem on the host.
