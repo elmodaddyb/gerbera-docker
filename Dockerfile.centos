@@ -1,0 +1,262 @@
+# Dockerfile for Gerbera CentOS Development
+# Created by: Eamonn Buss
+# Created on: 09/27/2017
+
+##--------------------------------------
+## Start with CentOS image as the base
+##--------------------------------------
+FROM centos:latest
+
+##--------------------------------------
+## Maintainer - Eamonn Buss
+##--------------------------------------
+MAINTAINER Eamonn Buss <eamonn@srcdevbin.com>
+
+##--------------------------------------
+## Install Gerbera Build Prerequisites
+##--------------------------------------
+RUN yum groupinstall -y "Development Tools"
+
+RUN yum install -y wget \
+curl-devel \
+taglib \
+taglib-devel \
+expat \
+expat-devel
+
+RUN yum install -y \
+file-devel \
+libexif \
+libexif-devel \
+libuuid \
+libuuid-devel \
+sqlite \
+sqlite-devel \
+sudo \
+xz \
+zlib
+
+##--------------------------------------
+## Install Devtoolset 6
+##--------------------------------------
+RUN yum install -y centos-release-scl
+
+RUN yum-config-manager --enable rhel-server-rhscl-7-rpms
+
+RUN yum install -y devtoolset-6
+RUN scl enable devtoolset-6 bash
+
+##--------------------------------------
+## Build Install FFMPEG from source
+## https://trac.ffmpeg.org/wiki/CompilationGuide/Centos
+##--------------------------------------
+RUN yum-config-manager --add-repo http://www.nasm.us/nasm.repo
+
+RUN yum install -y \
+autoconf \
+automake \
+bzip2 \
+freetype-devel \
+gcc \
+gcc-c++ \
+git \
+libtool \
+make \
+mercurial \
+nasm \
+pkgconfig \
+zlib-devel
+
+##--------------------------------------
+## Install CMAKE 3x
+##--------------------------------------
+WORKDIR /
+RUN curl -O https://cmake.org/files/v3.9/cmake-3.9.3.tar.gz
+RUN tar zxvf cmake-3.9.3.tar.gz
+WORKDIR /cmake-3.9.3
+RUN ./bootstrap
+RUN make
+RUN make install
+
+##--------------------------------------
+## Install NASM assembler - for FFMPEG
+##--------------------------------------
+WORKDIR /etc/yum.repo.d/
+RUN wget http://nasm.us/nasm.repo
+RUN yum install -y nasm
+
+RUN mkdir /ffmpeg_sources
+WORKDIR /ffmpeg_sources
+
+##--------------------------------------
+## Install x264 - for FFMPEG
+##--------------------------------------
+RUN git clone --depth 1 http://git.videolan.org/git/x264
+WORKDIR x264
+RUN ./configure --enable-static
+RUN make
+RUN make install
+
+##--------------------------------------
+## Install x265 - for FFMPEG
+##--------------------------------------
+WORKDIR /ffmpeg_sources
+RUN hg clone https://bitbucket.org/multicoreware/x265
+WORKDIR /ffmpeg_sources/x265/build/linux
+RUN cmake -G "Unix Makefiles" -DENABLE_SHARED:bool=off ../../source
+RUN make
+RUN make install
+
+##--------------------------------------
+## Install libfdk_aac - for FFMPEG
+##--------------------------------------
+WORKDIR /ffmpeg_sources
+RUN git clone --depth 1 https://github.com/mstorsjo/fdk-aac
+WORKDIR fdk-aac
+RUN autoreconf -fiv
+RUN ./configure --disable-shared
+RUN make
+RUN make install
+
+##--------------------------------------
+## Install libmp3lame - for FFMPEG
+##--------------------------------------
+WORKDIR /ffmpeg_sources
+RUN curl -L -O http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.5.tar.gz
+RUN tar xzvf lame-3.99.5.tar.gz
+WORKDIR lame-3.99.5
+RUN ./configure --disable-shared --enable-nasm
+RUN make
+RUN make install
+
+##--------------------------------------
+## Install libopus - for FFMPEG
+##--------------------------------------
+WORKDIR /ffmpeg_sources
+RUN curl -O https://archive.mozilla.org/pub/opus/opus-1.1.5.tar.gz
+RUN tar xzvf opus-1.1.5.tar.gz
+WORKDIR opus-1.1.5
+RUN ./configure --disable-shared
+RUN make
+RUN make install
+
+##--------------------------------------
+## Install libogg - for FFMPEG
+##--------------------------------------
+WORKDIR /ffmpeg_sources
+RUN curl -O https://ftp.osuosl.org/pub/xiph/releases/ogg/libogg-1.3.2.tar.gz
+RUN tar xzvf libogg-1.3.2.tar.gz
+WORKDIR libogg-1.3.2
+RUN ./configure --disable-shared
+RUN make
+RUN make install
+
+##--------------------------------------
+## Install libvorbis - for FFMPEG
+##--------------------------------------
+WORKDIR /ffmpeg_sources
+RUN curl -O https://ftp.osuosl.org/pub/xiph/releases/vorbis/libvorbis-1.3.4.tar.gz
+RUN tar xzvf libvorbis-1.3.4.tar.gz
+WORKDIR libvorbis-1.3.4
+RUN ./configure --disable-shared
+RUN make
+RUN make install
+
+##--------------------------------------
+## Install NASM assembler - for FFMPEG
+##--------------------------------------
+WORKDIR /ffmpeg_sources
+RUN curl -O http://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz
+RUN tar xzvf yasm-1.3.0.tar.gz
+WORKDIR yasm-1.3.0
+RUN ./configure
+RUN make
+RUN make install
+
+##--------------------------------------
+## Install libvpx - for FFMPEG
+##--------------------------------------
+WORKDIR /ffmpeg_sources
+RUN git clone --depth 1 https://chromium.googlesource.com/webm/libvpx.git
+WORKDIR libvpx
+RUN ./configure --disable-examples --disable-unit-tests --enable-vp9-highbitdepth --as=yasm
+RUN make
+RUN make install
+
+##--------------------------------------
+## Set PKG_CONFIG_PATH - for opus
+##--------------------------------------
+ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+##--------------------------------------
+## Install FFMPEG
+##--------------------------------------
+WORKDIR /ffmpeg_sources
+RUN curl -O http://ffmpeg.org/releases/ffmpeg-snapshot.tar.bz2
+RUN tar xjvf ffmpeg-snapshot.tar.bz2
+WORKDIR ffmpeg
+RUN ./configure \
+  --pkg-config-flags="--static" \
+  --enable-gpl \
+  --enable-libfdk_aac \
+  --enable-libfreetype \
+  --enable-libmp3lame \
+  --enable-libopus \
+  --enable-libvorbis \
+  --enable-libvpx \
+  --enable-libx264 \
+  --enable-libx265 \
+  --enable-nonfree
+RUN make
+RUN make install
+RUN hash -r
+
+ENV SHELL /bin/bash
+
+##--------------------------------------
+## Clone Gerbera GIT Repository
+##--------------------------------------
+RUN mkdir /gerbera
+WORKDIR /gerbera
+RUN git clone https://github.com/elmodaddyb/gerbera.git
+
+RUN mkdir build
+WORKDIR /gerbera/build
+
+##--------------------------------------
+## Install libupnp library
+##--------------------------------------
+RUN sh ../gerbera/scripts/install-pupnp18.sh
+
+##--------------------------------------
+## Install Duktape and make library available
+##--------------------------------------
+RUN sh ../gerbera/scripts/install-duktape.sh
+RUN echo /usr/local/lib > /etc/ld.so.conf.d/gerbera-x86_64.conf
+RUN ldconfig
+
+##--------------------------------------
+## Install taglib library
+##--------------------------------------
+RUN sh ../gerbera/scripts/install-taglib111.sh
+
+##--------------------------------------
+## Build & Install Gerbera
+##--------------------------------------
+RUN cmake ../gerbera -DWITH_MAGIC=1 -DWITH_MYSQL=0 -DWITH_CURL=1 -DWITH_JS=1 -DWITH_TAGLIB=1 -DWITH_AVCODEC=1 -DWITH_EXIF=1 -DWITH_LASTFM=0
+RUN make
+RUN make install
+
+##--------------------------------------
+## Setup the Gerbera user
+##--------------------------------------
+RUN useradd --system gerbera
+RUN mkdir /home/gerbera
+RUN mkdir /home/gerbera/.config
+
+RUN chown gerbera:gerbera -Rv /usr/local/share/gerbera
+RUN chown gerbera:gerbera -Rv /home/gerbera
+USER gerbera
+
+ENTRYPOINT ["/usr/local/bin/gerbera"]
+EXPOSE 49152/tcp 1900/udp
