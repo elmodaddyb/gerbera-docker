@@ -8,11 +8,6 @@
 FROM centos:latest
 
 ##--------------------------------------
-## Maintainer - Eamonn Buss
-##--------------------------------------
-MAINTAINER Eamonn Buss <eamonn@srcdevbin.com>
-
-##--------------------------------------
 ## Install Gerbera Build Prerequisites
 ##--------------------------------------
 RUN yum groupinstall -y "Development Tools"
@@ -85,13 +80,10 @@ RUN ./bootstrap
 RUN make
 RUN make install
 
-##--------------------------------------
-## Install NASM assembler - for FFMPEG
-##--------------------------------------
-WORKDIR /etc/yum.repo.d/
-RUN wget http://nasm.us/nasm.repo
-RUN yum install -y nasm
 
+##--------------------------------------
+## Build FFMPEG from source
+##--------------------------------------
 RUN mkdir /ffmpeg_sources
 WORKDIR /ffmpeg_sources
 

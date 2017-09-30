@@ -8,11 +8,6 @@
 FROM fedora:latest
 
 ##--------------------------------------
-## Maintainer - Eamonn Buss
-##--------------------------------------
-MAINTAINER Eamonn Buss <eamonn@srcdevbin.com>
-
-##--------------------------------------
 ## Install Gerbera Build Prerequisites
 ##--------------------------------------
 
