@@ -50,7 +50,8 @@ RUN apt-get install -y\
   libavresample-dev \
   libswscale-dev \
   libswresample-dev \
-  libpostproc-dev
+  libpostproc-dev \
+  systemd
 
 ENV SHELL /bin/bash
 
@@ -94,10 +95,16 @@ RUN make install
 RUN useradd --system gerbera
 RUN mkdir /home/gerbera
 RUN mkdir /home/gerbera/.config
+RUN mkdir /home/gerbera/.config/gerbera
 
 RUN chown gerbera:gerbera -Rv /usr/local/share/gerbera
 RUN chown gerbera:gerbera -Rv /home/gerbera
 USER gerbera
+
+##--------------------------------------
+## Setup Gerbera config.xml
+##--------------------------------------
+RUN gerbera --create-config > /home/gerbera/.config/gerbera/config.xml
 
 ENTRYPOINT ["/usr/local/bin/gerbera"]
 EXPOSE 49152/tcp 1900/udp

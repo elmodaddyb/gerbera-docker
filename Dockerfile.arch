@@ -10,18 +10,25 @@ FROM base/archlinux
 ##--------------------------------------
 ## Install required packages
 ##--------------------------------------
-RUN pacman --noconfirm -Sy base-devel \
+RUN pacman --noconfirm -Syu
+
+RUN pacman --noconfirm -Sy \
+base-devel \
+cmake \
+curl \
 expat \
 exiv2 \
-sqlite3 \
-mariadb \
-curl \
-file \
 ffmpeg \
 ffmpegthumbnailer \
+file \
 git \
-cmake \
+icu \
+libidn2 \
+mariadb \
+sqlite3 \
 wget
+
+
 
 ##--------------------------------------
 ## Setup a build user
@@ -48,11 +55,10 @@ RUN makepkg -sif --noconfirm
 WORKDIR /build
 RUN git clone https://aur.archlinux.org/libupnp18.git
 WORKDIR /build/libupnp18
-RUN less PKGBUILD
-RUN less libupnp18.install
-RUN makepkg -sif --noconfirm
+RUN makepkg -si --noconfirm
 
 USER root
+
 ##--------------------------------------
 ## Clone Gerbera GIT Repository
 ##--------------------------------------
@@ -96,6 +102,7 @@ RUN mkdir /home/gerbera/.config
 
 RUN chown gerbera:gerbera -Rv /usr/local/share/gerbera
 RUN chown gerbera:gerbera -Rv /home/gerbera
+
 USER gerbera
 
 ENTRYPOINT ["/usr/local/bin/gerbera"]
