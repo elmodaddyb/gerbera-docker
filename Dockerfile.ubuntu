@@ -51,7 +51,8 @@ RUN apt-get install -y\
   libswscale-dev \
   libswresample-dev \
   libpostproc-dev \
-  systemd
+  systemd \
+  vorbis-tools
 
 ENV SHELL /bin/bash
 
@@ -106,5 +107,5 @@ USER gerbera
 ##--------------------------------------
 RUN gerbera --create-config > /home/gerbera/.config/gerbera/config.xml
 
-ENTRYPOINT ["/usr/local/bin/gerbera"]
+ENTRYPOINT ["/usr/local/bin/gerbera", "--debug"]
 EXPOSE 49152/tcp 1900/udp
